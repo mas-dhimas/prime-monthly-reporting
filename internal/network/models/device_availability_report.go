@@ -11,9 +11,9 @@ type deviceAvailability struct {
 
 type availability struct {
 	Uptime           int     `json:"uptime"`
-	Downtime         int     `json:"donwtime"`
+	Downtime         int     `json:"downtime"`
 	UnknownTime      int     `json:"unknown_time"`
-	Ratio            float32 `json:"ration"`
+	Ratio            float32 `json:"ratio"`
 	DowntimeRatio    float32 `json:"downtime_ratio"`
 	UnknownTimeRatio float32 `json:"unknown_time_ratio"`
 	Outage           int     `json:"outage"`

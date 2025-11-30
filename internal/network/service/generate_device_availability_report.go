@@ -26,12 +26,13 @@ func (s *Service) GenerateDeviceAvailabilityReporting(from, to int) (string, err
 	logrus.Info("success get device inventory")
 
 	// // loop every inventory devices
-	for i, v := range res.Data.Nodes {
-		if i != 0 {
-			continue
-		}
+	for _, v := range res.Data.Nodes {
 		// 	// loop each months
 		for i := from; i <= to; i++ {
+			if i < int(v.CreatedAt.Month()) {
+				continue
+			}
+
 			month := strconv.Itoa(i)
 			if i < 10 {
 				month = fmt.Sprintf("0%s", month)
@@ -100,13 +101,18 @@ func (s *Service) GenerateDeviceAvailabilityReporting(from, to int) (string, err
 		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("A%d", row+startpoint), v.Data.IP)
 		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("B%d", row+startpoint), v.Data.Month)
 		// ICMP / PING
-		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("C%d", row+startpoint), v.Data.IcmpPing.Ratio)
+		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("C%d", row+startpoint), fmt.Sprintf("%.2f", v.Data.IcmpPing.Ratio))
 		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("D%d", row+startpoint), lib.FormatSeconds(v.Data.IcmpPing.Uptime))
 		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("E%d", row+startpoint), lib.FormatSeconds(v.Data.IcmpPing.Downtime))
 		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("F%d", row+startpoint), lib.FormatSeconds(v.Data.IcmpPing.UnknownTime))
 
 		// SNMP Uptime
-		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("G%d", row+startpoint), v.Data.SnmpUptime.Ratio)
+		ratio := fmt.Sprintf("%.2f", v.Data.SnmpUptime.Ratio)
+		if v.Data.SnmpUptime.Ratio < 0 {
+			ratio = "N/A"
+		}
+
+		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("G%d", row+startpoint), ratio)
 		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("H%d", row+startpoint), lib.FormatSeconds(v.Data.SnmpUptime.Uptime))
 		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("I%d", row+startpoint), lib.FormatSeconds(v.Data.SnmpUptime.Downtime))
 		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("J%d", row+startpoint), lib.FormatSeconds(v.Data.SnmpUptime.UnknownTime))

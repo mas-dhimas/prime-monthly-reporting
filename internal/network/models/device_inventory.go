@@ -7,7 +7,7 @@ import (
 )
 
 type inventoryNodeResponse struct {
-	ID                       primitive.ObjectID  `json:"inventory_id"`
+	ID                       primitive.ObjectID  `json:"id"`
 	NodeName                 string              `json:"node_name"`
 	IPMgmt                   string              `json:"ip_mgmt"`
 	ProbeID                  primitive.ObjectID  `json:"probe_id,omitempty"`
@@ -25,7 +25,7 @@ type inventoryNodeResponse struct {
 }
 
 type paginatedNodeResponse struct {
-	Nodes     []inventoryNodeResponse `json:"data"`
+	Nodes     []inventoryNodeResponse `json:"nodes"`
 	TotalData int64                   `json:"total_data"`
 }
 
