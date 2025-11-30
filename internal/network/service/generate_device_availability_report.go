@@ -101,30 +101,30 @@ func (s *Service) GenerateDeviceAvailabilityReporting(from, to int) (string, err
 		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("B%d", row+startpoint), v.Data.Month)
 		// ICMP / PING
 		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("C%d", row+startpoint), v.Data.IcmpPing.Ratio)
-		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("D%d", row+startpoint), v.Data.IcmpPing.Uptime)
-		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("E%d", row+startpoint), v.Data.IcmpPing.Downtime)
-		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("F%d", row+startpoint), v.Data.IcmpPing.UnknownTime)
+		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("D%d", row+startpoint), lib.FormatSeconds(v.Data.IcmpPing.Uptime))
+		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("E%d", row+startpoint), lib.FormatSeconds(v.Data.IcmpPing.Downtime))
+		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("F%d", row+startpoint), lib.FormatSeconds(v.Data.IcmpPing.UnknownTime))
 
 		// SNMP Uptime
 		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("G%d", row+startpoint), v.Data.SnmpUptime.Ratio)
-		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("H%d", row+startpoint), v.Data.SnmpUptime.Uptime)
-		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("I%d", row+startpoint), v.Data.SnmpUptime.Downtime)
-		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("J%d", row+startpoint), v.Data.SnmpUptime.UnknownTime)
+		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("H%d", row+startpoint), lib.FormatSeconds(v.Data.SnmpUptime.Uptime))
+		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("I%d", row+startpoint), lib.FormatSeconds(v.Data.SnmpUptime.Downtime))
+		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("J%d", row+startpoint), lib.FormatSeconds(v.Data.SnmpUptime.UnknownTime))
 		if i == len(data)-1 {
 			lastPoint = fmt.Sprintf("J%d", row+startpoint)
 		}
 		row++
 	}
 
-	style, err := xlsx.NewStyle(`
+	border, err := xlsx.NewStyle(`
 	{
-		"alignment":{"horizontal":"center","ident":1,"justify_last_line":true,"reading_order":0,"relative_indent":1,"shrink_to_fit":true,"vertical":"","wrap_text":false},
+		"alignment":{"horizontal":"center","ident":1,"justify_last_line":true,"reading_order":0,"relative_indent":1,"shrink_to_fit":false,"vertical":"","wrap_text":false},
 		"border":[{"type":"left","color":"000000","style":1},{"type":"top","color":"000000","style":1},{"type":"bottom","color":"000000","style":1},{"type":"right","color":"000000","style":1}]
 	}`)
 	if err != nil {
 		logrus.Error("error set broder style : ", err)
 	}
-	xlsx.SetCellStyle(sheet1Name, "A1", lastPoint, style)
+	xlsx.SetCellStyle(sheet1Name, "A1", lastPoint, border)
 
 	filename := fmt.Sprintf("%s-%s.xlsx", "device_availability", time.Now().Format(time.RFC822))
 	err = xlsx.SaveAs(fmt.Sprintf("./docs/%s", filename))
