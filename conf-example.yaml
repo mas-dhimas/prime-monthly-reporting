@@ -1,0 +1,7 @@
+service_data:
+  log_level: "warn"
+  prime_token: ""
+source_data:
+  network:
+    device_inventory: ""
+    device_availability: "https://stage-prime.netmonk.id/api/network/reporting/device/%v/availability?from=%v&to=%v"
