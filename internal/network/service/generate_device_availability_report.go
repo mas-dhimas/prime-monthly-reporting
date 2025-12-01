@@ -29,7 +29,7 @@ func (s *Service) GenerateDeviceAvailabilityReporting(from, to int) (string, err
 	for _, v := range res.Data.Nodes {
 		// 	// loop each months
 		for i := from; i <= to; i++ {
-			if i < int(v.CreatedAt.Month()) {
+			if i < int(v.CreatedAt.Month()) && int(v.CreatedAt.Year()) == year {
 				continue
 			}
 
@@ -44,8 +44,8 @@ func (s *Service) GenerateDeviceAvailabilityReporting(from, to int) (string, err
 				return "", err
 			}
 
-			startUnix := start.Unix()
-			endUnix := lib.EndOfMonth(start).Unix()
+			startUnix := start.Add(-7 * time.Hour).Unix()
+			endUnix := lib.EndOfMonth(start).Add(-7 * time.Hour).Add(-1 * time.Second).Unix()
 
 			availability, err := s.repo.GetDeviceAvailibilityReporting(v.ID.Hex(), int(startUnix), int(endUnix))
 			if err != nil {
@@ -65,46 +65,51 @@ func (s *Service) GenerateDeviceAvailabilityReporting(from, to int) (string, err
 	xlsx.MergeCell(sheet1Name, "A1", "A3")
 	xlsx.SetCellValue(sheet1Name, "A1", "IP Address")
 
-	// month
+	// node name
 	xlsx.MergeCell(sheet1Name, "B1", "B3")
-	xlsx.SetCellValue(sheet1Name, "B1", "Month")
+	xlsx.SetCellValue(sheet1Name, "B1", "Node Name")
+
+	// month
+	xlsx.MergeCell(sheet1Name, "C1", "C3")
+	xlsx.SetCellValue(sheet1Name, "C1", "Month")
 
 	// availability table name
-	xlsx.MergeCell(sheet1Name, "C1", "J1")
+	xlsx.MergeCell(sheet1Name, "D1", "K1")
 	// xlsx.MergeCell(sheet1Name, "C1", "F1")
-	xlsx.SetCellValue(sheet1Name, "C1", "Availability")
+	xlsx.SetCellValue(sheet1Name, "D1", "Availability")
 
 	// ICMP PING table name
-	xlsx.MergeCell(sheet1Name, "C2", "F2")
-	xlsx.SetCellValue(sheet1Name, "C2", "ICMP / Ping")
+	xlsx.MergeCell(sheet1Name, "D2", "G2")
+	xlsx.SetCellValue(sheet1Name, "D2", "ICMP / Ping")
 
 	// ICMP Availability utilization
-	xlsx.SetCellValue(sheet1Name, "C3", "Percentage (%)")
-	xlsx.SetCellValue(sheet1Name, "D3", "Uptime")
-	xlsx.SetCellValue(sheet1Name, "E3", "Downtime")
-	xlsx.SetCellValue(sheet1Name, "F3", "Undetected")
+	xlsx.SetCellValue(sheet1Name, "D3", "Percentage (%)")
+	xlsx.SetCellValue(sheet1Name, "E3", "Uptime")
+	xlsx.SetCellValue(sheet1Name, "F3", "Downtime")
+	xlsx.SetCellValue(sheet1Name, "G3", "Undetected")
 
 	// SNMP Uptime table name
-	xlsx.MergeCell(sheet1Name, "G2", "J2")
-	xlsx.SetCellValue(sheet1Name, "G2", "SNMP Uptime")
+	xlsx.MergeCell(sheet1Name, "H2", "K2")
+	xlsx.SetCellValue(sheet1Name, "H2", "SNMP Uptime")
 
 	// SNMP Uptime utilization
-	xlsx.SetCellValue(sheet1Name, "G3", "Percentage (%)")
-	xlsx.SetCellValue(sheet1Name, "H3", "Uptime")
-	xlsx.SetCellValue(sheet1Name, "I3", "Downtime")
-	xlsx.SetCellValue(sheet1Name, "J3", "Undetected")
+	xlsx.SetCellValue(sheet1Name, "H3", "Percentage (%)")
+	xlsx.SetCellValue(sheet1Name, "I3", "Uptime")
+	xlsx.SetCellValue(sheet1Name, "J3", "Downtime")
+	xlsx.SetCellValue(sheet1Name, "K3", "Undetected")
 
 	row := 0
 	lastPoint := ""
 	for i, v := range data {
 		startpoint := 4
 		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("A%d", row+startpoint), v.Data.IP)
-		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("B%d", row+startpoint), v.Data.Month)
+		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("B%d", row+startpoint), v.Data.NodeName)
+		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("C%d", row+startpoint), v.Data.Month)
 		// ICMP / PING
-		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("C%d", row+startpoint), fmt.Sprintf("%.2f", v.Data.IcmpPing.Ratio))
-		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("D%d", row+startpoint), lib.FormatSeconds(v.Data.IcmpPing.Uptime))
-		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("E%d", row+startpoint), lib.FormatSeconds(v.Data.IcmpPing.Downtime))
-		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("F%d", row+startpoint), lib.FormatSeconds(v.Data.IcmpPing.UnknownTime))
+		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("D%d", row+startpoint), fmt.Sprintf("%.2f", v.Data.IcmpPing.Ratio))
+		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("E%d", row+startpoint), lib.FormatSeconds(v.Data.IcmpPing.Uptime))
+		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("F%d", row+startpoint), lib.FormatSeconds(v.Data.IcmpPing.Downtime))
+		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("G%d", row+startpoint), lib.FormatSeconds(v.Data.IcmpPing.UnknownTime))
 
 		// SNMP Uptime
 		ratio := fmt.Sprintf("%.2f", v.Data.SnmpUptime.Ratio)
@@ -112,12 +117,12 @@ func (s *Service) GenerateDeviceAvailabilityReporting(from, to int) (string, err
 			ratio = "N/A"
 		}
 
-		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("G%d", row+startpoint), ratio)
-		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("H%d", row+startpoint), lib.FormatSeconds(v.Data.SnmpUptime.Uptime))
-		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("I%d", row+startpoint), lib.FormatSeconds(v.Data.SnmpUptime.Downtime))
-		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("J%d", row+startpoint), lib.FormatSeconds(v.Data.SnmpUptime.UnknownTime))
+		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("H%d", row+startpoint), ratio)
+		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("I%d", row+startpoint), lib.FormatSeconds(v.Data.SnmpUptime.Uptime))
+		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("J%d", row+startpoint), lib.FormatSeconds(v.Data.SnmpUptime.Downtime))
+		xlsx.SetCellValue(sheet1Name, fmt.Sprintf("K%d", row+startpoint), lib.FormatSeconds(v.Data.SnmpUptime.UnknownTime))
 		if i == len(data)-1 {
-			lastPoint = fmt.Sprintf("J%d", row+startpoint)
+			lastPoint = fmt.Sprintf("K%d", row+startpoint)
 		}
 		row++
 	}
